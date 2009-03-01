@@ -1,0 +1,7 @@
+load_path:
+  - javascripts
+  - vendor/sprockets/*/src
+source_files:
+  - javascripts/application.js
+  - javascripts/**/*.js
+output_file: public/sprockets.js

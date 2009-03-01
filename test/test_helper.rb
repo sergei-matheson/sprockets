@@ -7,12 +7,12 @@ class Test::Unit::TestCase
   FIXTURES_PATH = File.expand_path(File.join(File.dirname(__FILE__), "fixtures")) unless defined?(FIXTURES_PATH)
   
   protected
-    def location_for_fixture(fixture)
+    def fixture(fixture)
       File.join(FIXTURES_PATH, fixture)
     end
     
     def content_of_fixture(fixture)
-      IO.read(location_for_fixture(fixture))
+      IO.read(fixture(fixture))
     end
   
     def environment_for_fixtures
