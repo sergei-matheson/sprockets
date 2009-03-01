@@ -39,4 +39,5 @@ require "sprockets/source_file"
 require "sprockets/concatenation"
 require "sprockets/preprocessor"
 require "sprockets/secretary"
-
+require "sprockets/options"
+require "sprockets/configuration"

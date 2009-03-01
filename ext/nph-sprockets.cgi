@@ -3,7 +3,8 @@
 # This is a simple CGI wrapper around Sprockets. 
 #
 # Copy it into a directory on your site with CGI enabled. When invoked, the 
-# script will search its directory and parent directories for a YAML file named
+# script will look in its parent directory, or the directory specified in the
+# "sprockets_root" environment variable, for a YAML file named
 # "config/sprockets.yml" in order to load configuration information.
 #
 # If you set the environment variable "sprockets_generate_output_file" to 
@@ -64,8 +65,13 @@
 # to your Apache configuration and mysites/public/sprockets.js will be cached
 # on the first request to /sprockets.js.
 
-require "yaml"
-require "fileutils"
+def sprockets_root
+  @sprockets_root ||= File.expand_path(
+    ENV["REDIRECT_sprockets_root"] ||
+    ENV["sprockets_root"]          ||
+    File.join(File.dirname(__FILE__), "..")
+  )
+end
 
 def respond_with(options = {})
   options = { :code => 200, :content => "", :type => "text/plain" }.merge(options)
@@ -76,26 +82,6 @@ def respond_with(options = {})
   $stdout.flush
   exit!
 end
-
-def search_upwards_for(filename)
-  pwd = original_pwd = Dir.pwd
-  loop do
-    return File.expand_path(filename) if File.file?(filename)
-    Dir.chdir("..")
-    respond_with(:code => 500, :content => "couldn't find config/sprockets.yml") if Dir.pwd == pwd
-    pwd = Dir.pwd
-  end
-ensure
-  Dir.chdir(original_pwd)
-end
-
-def generate_output_file?
-  (ENV["REDIRECT_sprockets_generate_output_file"] || ENV["sprockets_generate_output_file"]) =~ /true/i
-end
-
-configuration_file = search_upwards_for("config/sprockets.yml")
-sprockets_root     = File.dirname(File.dirname(configuration_file))
-configuration      = YAML.load(IO.read(configuration_file))
 
 begin
   if File.directory?(sprockets_dir = File.join(sprockets_root, "vendor/gems/sprockets/lib"))
@@ -113,13 +99,14 @@ rescue Exception => e
 end
 
 begin
-  secretary = Sprockets::Secretary.new(
-    :root         => sprockets_root,
-    :load_path    => configuration[:load_path],
-    :source_files => configuration[:source_files]
-  )
+  Dir.chdir(sprockets_root)
   
-  secretary.concatenation.save_to(File.join(sprockets_root, configuration[:output_file])) if generate_output_file?
+  configuration = Sprockets::Configuration.load_from_file
+  configuration.merge!(Sprockets::Configuration.load_from_environment)
+  
+  secretary = Sprockets::Secretary.new(configuration)
+  secretary.concatenation.save_to(configuration.output_file) if configuration.generate_output_file
+  
   respond_with(:content => secretary.concatenation.to_s, :type => "text/javascript")
   
 rescue Exception => e
