@@ -30,12 +30,17 @@ module Sprockets
   end
 end
 
-require "sprockets/version"
+require "sprockets/concatenation"
+require "sprockets/directive"
+require "sprockets/directives"
+require "sprockets/directives/provide_directive"
+require "sprockets/directives/require_directive"
+require "sprockets/directives/relative_require_directive"
 require "sprockets/error"
 require "sprockets/environment"
 require "sprockets/pathname"
-require "sprockets/source_file"
-require "sprockets/concatenation"
 require "sprockets/preprocessor"
+require "sprockets/source_file"
 require "sprockets/secretary"
+require "sprockets/version"
 

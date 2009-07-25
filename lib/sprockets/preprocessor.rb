@@ -43,7 +43,11 @@ module Sprockets
           comment_lines.push([source_file, line, number])
 
         elsif line_is_single_line_comment?(line)
-          record_single_comment_line(source_file, line, number)
+          if directive = Directive.for(source_file, line, number)
+            directive.evaluate_in(self)
+          else
+            record_single_comment_line(source_file, line, number)
+          end
 
         else
           record_source_line(source_file, line, number)
