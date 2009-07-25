@@ -10,6 +10,19 @@ Rake::TestTask.new do |t|
   t.verbose = true
 end
 
+begin
+  require "rcov/rcovtask"
+
+  Rcov::RcovTask.new do |t|
+    t.libs << "test"
+    t.test_files = FileList["test/test_*.rb"]
+    t.rcov_opts << "-x '/[Gg]ems/'"
+    t.verbose = true
+  end
+
+rescue LoadError
+end
+
 Rake::GemPackageTask.new(eval(IO.read(File.join(File.dirname(__FILE__), "sprockets.gemspec")))) do |pkg|
   require File.join(File.dirname(__FILE__), "lib", "sprockets", "version")
   raise "Error: Sprockets::Version doesn't match gemspec" if Sprockets::Version::STRING != pkg.version.to_s
