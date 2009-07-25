@@ -7,15 +7,15 @@ class ConcatenationTest < Test::Unit::TestCase
   end
   
   def test_record
-    assert_equal [], @concatenation.source_lines
-    assert_equal "hello\n", @concatenation.record(source_line("hello\n")).to_s
-    assert_equal "world\n", @concatenation.record(source_line("world\n")).to_s
-    assert_equal ["hello\n", "world\n"], @concatenation.source_lines.map { |source_line| source_line.to_s }
+    assert_equal [], @concatenation.lines
+    assert_equal "hello\n", @concatenation.record(source_file, "hello\n", 1).to_s
+    assert_equal "world\n", @concatenation.record(source_file, "world\n", 2).to_s
+    assert_equal ["hello\n", "world\n"], @concatenation.lines
   end
   
   def test_to_s
-    @concatenation.record(source_line("hello\n"))
-    @concatenation.record(source_line("world\n"))
+    @concatenation.record(source_file, "hello\n", 1)
+    @concatenation.record(source_file, "world\n", 2)
     assert_equal "hello\nworld\n", @concatenation.to_s
   end
   

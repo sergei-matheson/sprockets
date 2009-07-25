@@ -1,20 +1,22 @@
 module Sprockets
   class Concatenation
-    attr_reader :source_lines
+    attr_reader :lines
     
     def initialize
-      @source_lines = []
+      @lines = []
+      @source_files_and_numbers = []
       @source_file_mtimes = {}
     end
     
-    def record(source_line)
-      source_lines << source_line
-      record_mtime_for(source_line.source_file)
-      source_line
+    def record(source_file, line, number)
+      @lines << line
+      @source_files_and_numbers << [source_file, number]
+      record_mtime_for(source_file)
+      line
     end
     
     def to_s
-      source_lines.join
+      lines.join
     end
 
     def mtime

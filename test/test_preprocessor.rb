@@ -75,7 +75,7 @@ class PreprocessorTest < Test::Unit::TestCase
     end
     
     def source_lines_matching(line)
-      concatenation.source_lines.select { |source_line| source_line.line.strip == line }
+      concatenation.lines.select { |l| l.strip == line }
     end
     
     def require_file(location)
@@ -91,7 +91,7 @@ class PreprocessorTest < Test::Unit::TestCase
     end
     
     def assert_concatenation_does_not_contain_line(line)
-      assert source_lines_matching(line).empty?, "Expected #{line.inspect} to not exist"
+      assert source_lines_matching(line).empty?, "Expected #{line.inspect} not to exist"
     end
     
     def assert_concatenation_contains_line(line)

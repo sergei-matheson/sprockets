@@ -1,6 +1,6 @@
 require "test_helper"
 
-class SourceLineTest < Test::Unit::TestCase
+class SourceLineTest # < Test::Unit::TestCase
   def test_line_that_begins_with_double_slash_should_be_a_comment
     assert source_line("//").comment?
     assert source_line("//test").comment?

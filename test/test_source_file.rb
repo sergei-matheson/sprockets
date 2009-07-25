@@ -1,15 +1,14 @@
 require "test_helper"
-require "enumerator"
-Enumerator = Enumerable::Enumerator unless defined?(Enumerator) # for 1.9.1 compatibility
 
 class SourceFileTest < Test::Unit::TestCase
   def setup
     @environment = environment_for_fixtures
   end
   
-  def test_each_source_line
-    source_file_lines = Enumerator.new(source_file("src/foo/bar.js"), :each_source_line).to_a
-    assert_equal content_of_fixture("src/foo/bar.js"), source_file_lines.map { |line| line.line }.join
+  def test_each_line
+    source_file_lines = []
+    source_file("src/foo/bar.js").each_line {|line, number| source_file_lines << line }
+    assert_equal content_of_fixture("src/foo/bar.js"), source_file_lines.join
     assert_equal 4, source_file_lines.length
   end
   

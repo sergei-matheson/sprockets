@@ -1,27 +1,23 @@
 module Sprockets
   class Preprocessor
-    attr_reader :environment, :concatenation, :source_files, :asset_paths
+    attr_reader :environment, :concatenation, :source_files, :pdoc_lines, :asset_paths
     
     def initialize(environment, options = {})
-      @environment = environment
+      @environment   = environment
       @concatenation = Concatenation.new
-      @source_files = []
-      @asset_paths = []
-      @options = options
+      @source_files  = []
+      @comment_lines = []
+      @pdoc_lines    = []
+      @asset_paths   = []
+      @options       = options
     end
     
     def require(source_file)
       return if source_files.include?(source_file)
       source_files << source_file
       
-      source_file.each_source_line do |source_line|
-        if source_line.require?
-          require_from_source_line(source_line)
-        elsif source_line.provide?
-          provide_from_source_line(source_line)
-        else
-          record_source_line(source_line)
-        end
+      source_file.each_line do |line, number|
+        process(source_file, line, number)
       end
     end
     
@@ -31,61 +27,108 @@ module Sprockets
     end
     
     protected
-      attr_reader :options
-    
-      def require_from_source_line(source_line)
-        require pathname_from(source_line).source_file
+      attr_reader :options, :comment_lines
+
+      def process(source_file, line, number)
+        if inside_multi_line_comment?
+          comment_lines.push([source_file, line, number])
+
+          if line_closes_multi_line_pdoc_comment?(line)
+            record_comment_lines_as(:pdoc)
+          elsif line_closes_multi_line_comment?(line)
+            record_comment_lines_as(:source)
+          end
+
+        elsif line_opens_multi_line_pdoc_comment?(line)
+          comment_lines.push([source_file, line, number])
+
+        elsif line_is_single_line_comment?(line)
+          record_single_comment_line(source_file, line, number)
+
+        else
+          record_source_line(source_file, line, number)
+        end
+        
+      rescue UndefinedConstantError => constant
+        raise UndefinedConstantError, 
+          "couldn't find constant `#{constant}' in line #{number} of #{source_file.pathname}"
+      end
+
+    private
+      def record_source_line(source_file, line, number)
+        concatenation.record(source_file, format(line), number)
       end
       
-      def provide_from_source_line(source_line)
-        provide asset_path_from(source_line)
+      def record_pdoc_line(source_file, line, number)
+        pdoc_lines.push([source_file, line, number])
+        record_source_line(source_file, line, number) unless stripping_comments?
+      end
+
+      def record_single_comment_line(source_file, line, number)
+        record_source_line(source_file, line, number) unless stripping_comments?
+      end
+
+      def record_comment_lines_as(kind)
+        comment_lines.each do |comment_line|
+          send(:"record_#{kind}_line", *comment_line)
+        end
+        comment_lines.clear
       end
       
-      def record_source_line(source_line)
-        unless source_line.comment? && strip_comments?
-          concatenation.record(source_line)
+      def format(line)
+        result = line.chomp
+        interpolate_constants!(result, environment.constants)
+        strip_trailing_whitespace!(result)
+        result << $/
+      end
+      
+      def interpolate_constants!(result, constants)
+        result.gsub!(/<%=(.*?)%>/) do
+          constant = $1.strip
+          if value = constants[constant]
+            value
+          else
+            raise UndefinedConstantError, constant
+          end
         end
       end
+      
+      def strip_trailing_whitespace!(result)
+        result.gsub!(/\s+$/, "")
+      end
 
-      def strip_comments?
-        options[:strip_comments] != false
+      def inside_multi_line_comment?
+        comment_lines.any?
       end
       
-      def pathname_from(source_line)
-        pathname = send(pathname_finder_from(source_line), source_line)
-        raise_load_error_for(source_line) unless pathname
-        pathname
-      end
-
-      def pathname_for_require_from(source_line)
-        environment.find(location_from(source_line))
+      def line_opens_multi_line_pdoc_comment?(line)
+        if rest = line[/^\s*\/\*\*(.*)/, 1]
+          !line_closes_multi_line_comment?(rest)
+        end
       end
       
-      def pathname_for_relative_require_from(source_line)
-        source_line.source_file.find(location_from(source_line))
-      end
-
-      def pathname_finder_from(source_line)
-        "pathname_for_#{kind_of_require_from(source_line)}_from"
-      end
-
-      def kind_of_require_from(source_line)
-        source_line.require[/^(.)/, 1] == '"' ? :relative_require : :require
-      end
-
-      def location_from(source_line)
-        location = source_line.require[/^.(.*).$/, 1]
-        File.join(File.dirname(location), File.basename(location, ".js") + ".js")
+      def line_closes_multi_line_pdoc_comment?(line)
+        line =~ /\*\*\/\s*$/
       end
       
-      def asset_path_from(source_line)
-        source_line.source_file.find(source_line.provide, :directory)
+      def line_opens_multi_line_comment?(line)
+        if rest = line[/^\s*\/\*(.*)/, 1]
+          !line_closes_multi_line_comment?(rest)
+        end
       end
-
-      def raise_load_error_for(source_line)
-        kind = kind_of_require_from(source_line).to_s.tr("_", " ")
-        file = File.split(location_from(source_line)).last
-        raise LoadError, "can't find file for #{kind} `#{file}' (#{source_line.inspect})"
+      
+      def line_closes_multi_line_comment?(line)
+        if rest = line[/\*\/(.*)/, 1]
+          !line_opens_multi_line_comment?(rest)
+        end
+      end
+      
+      def line_is_single_line_comment?(line)
+        line =~ /^\s*\/\//
+      end
+      
+      def stripping_comments?
+       options[:strip_comments] != false
       end
   end
 end

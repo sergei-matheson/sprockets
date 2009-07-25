@@ -35,14 +35,10 @@ class Test::Unit::TestCase
       Sprockets::Pathname.new(environment, File.join(FIXTURES_PATH, location))
     end
     
-    def source_file(location, environment = @environment)
+    def source_file(location = "dummy", environment = @environment)
       Sprockets::SourceFile.new(environment, pathname(location, environment))
     end
 
-    def source_line(line, source_file = nil, line_number = 1)
-      Sprockets::SourceLine.new(source_file || source_file("dummy"), line, line_number)
-    end
-    
     def with_temporary_directory
       path = File.join(Dir.tmpdir, [caller[0][/`(.*)'/, 1], Time.now.to_f].join("_"))
       begin
