@@ -1,10 +1,19 @@
 module Sprockets
   class Concatenation
-    attr_reader :source_lines
+    attr_reader :source_lines, :yui_compressor_options
     
-    def initialize
+    def initialize(options = {})
       @source_lines = []
       @source_file_mtimes = {}
+      @yui_compressor_options = options[:yui_compressor]
+      if @yui_compressor_options
+        begin
+          require 'rubygems'
+          require 'yui/compressor'
+        rescue LoadError
+          @yui_compressor_options = nil
+        end
+      end
     end
     
     def record(source_line)
@@ -14,7 +23,11 @@ module Sprockets
     end
     
     def to_s
-      source_lines.join
+      result = source_lines.join
+      return result unless yui_compressor_options
+      options = yui_compressor_options.is_a?(Hash) ? yui_compressor_options : {}
+      compressor = YUI::JavaScriptCompressor.new(options)
+      compressor.compress(result)
     end
 
     def mtime

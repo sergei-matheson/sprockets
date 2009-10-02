@@ -17,7 +17,8 @@ module Sprockets
     def reset!(options = @options)
       @options = DEFAULT_OPTIONS.merge(options)
       @environment  = Sprockets::Environment.new(@options[:root])
-      @preprocessor = Sprockets::Preprocessor.new(@environment, :strip_comments => @options[:strip_comments])
+      @preprocessor = Sprockets::Preprocessor.new(@environment, :strip_comments => @options[:strip_comments],
+        :yui_compressor => options[:yui_compressor])
 
       add_load_locations(@options[:load_path])
       add_source_files(@options[:source_files])
