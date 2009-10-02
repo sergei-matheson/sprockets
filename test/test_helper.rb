@@ -52,4 +52,13 @@ class Test::Unit::TestCase
         FileUtils.rm_rf(path)
       end
     end
+    
+    def yui_compressor_available?
+      require 'rubygems'
+      return true if Gem.available?('yui-compressor')
+      puts "Cannot test YUI::Compressor integration: the yui-compressor gem is unavailable."
+      puts "You can install it using:\n"
+      puts "  - sudo gem install yui-compressor"
+      false
+    end
 end

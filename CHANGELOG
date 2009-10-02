@@ -1,3 +1,5 @@
+* Add a :yui_compressor option to Secretary that is passed through to Preprocessor and then Concatenation.  Can be a boolean or a Hash of YUI::Compressor options. (Christophe Porteneuve)
+
 * Add a :strip_comments option to Secretary that is passed through to its Preprocessor. [#12 state:resolved]
 
 

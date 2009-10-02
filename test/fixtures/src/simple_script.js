@@ -1,0 +1,1 @@
+(function () { var foo = {}; foo["bar"] = "baz"; })()

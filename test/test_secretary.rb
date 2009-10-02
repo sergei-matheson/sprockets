@@ -82,6 +82,15 @@ class SecretaryTest < Test::Unit::TestCase
     assert_equal content_of_fixture("src/script_with_comments.js"), secretary.concatenation.to_s
   end
   
+  def test_secretary_passes_yui_compressor_option_through_to_preprocessor
+    secretary = Sprockets::Secretary.new(:root => FIXTURES_PATH, :yui_compressor => true)
+    unless yui_compressor_available?
+      assert_nil secretary.preprocessor.concatenation.yui_compressor_options
+      return
+    end
+    assert_equal true, secretary.preprocessor.concatenation.yui_compressor_options
+  end
+  
   protected
     def paths_relative_to(root, *paths)
       paths.map { |path| File.join(root, path) }
