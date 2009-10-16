@@ -4,7 +4,7 @@ module Sprockets
     
     def initialize(environment, options = {})
       @environment = environment
-      @concatenation = Concatenation.new(:yui_compressor => options[:yui_compressor])
+      @concatenation = Concatenation.new(:compress => options[:compress])
       @source_files = []
       @asset_paths = []
       @options = options

@@ -5,13 +5,12 @@ module Sprockets
     def initialize(options = {})
       @source_lines = []
       @source_file_mtimes = {}
-      @yui_compressor_options = options[:yui_compressor]
-      if @yui_compressor_options
-        begin
-          require 'rubygems'
-          require 'yui/compressor'
-        rescue LoadError
-          @yui_compressor_options = nil
+      
+      if Sprockets.has_yui_compressor?
+        if options[:compress].is_a?(Hash)
+          @yui_compressor_options = options[:compress]
+        elsif options[:compress]
+          @yui_compressor_options = {}
         end
       end
     end
@@ -23,11 +22,16 @@ module Sprockets
     end
     
     def to_s
-      result = source_lines.join
-      return result unless yui_compressor_options
-      options = yui_compressor_options.is_a?(Hash) ? yui_compressor_options : {}
-      compressor = YUI::JavaScriptCompressor.new(options)
-      compressor.compress(result)
+      if yui_compressor_options
+        compressor = YUI::JavaScriptCompressor.new(yui_compressor_options)
+        compressor.compress(source)
+      else
+        source
+      end
+    end
+    
+    def source
+      source_lines.join
     end
 
     def mtime

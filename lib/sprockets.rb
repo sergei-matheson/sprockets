@@ -5,6 +5,13 @@ require "fileutils"
 
 module Sprockets
   class << self
+    def has_yui_compressor?
+      require "yui/compressor"
+      true
+    rescue ::LoadError
+      false
+    end
+    
     def running_on_windows?
       RUBY_PLATFORM =~ /(win|w)32$/
     end

@@ -19,18 +19,18 @@ class ConcatenationTest < Test::Unit::TestCase
     assert_equal "hello\nworld\n", @concatenation.to_s
   end
   
-  def test_to_s_with_yui_compressor_true
-    return unless yui_compressor_available?
-    @concatenation = Sprockets::Concatenation.new(:yui_compressor => true)
-    source_file("src/simple_script.js").each_source_line { |l| @concatenation.record(l) }
-    assert_equal content_of_fixture("src/simple_script_compressed.js"), @concatenation.to_s
-  end
+  if Sprockets.has_yui_compressor?
+    def test_to_s_with_compress_true
+      @concatenation = Sprockets::Concatenation.new(:compress => true)
+      source_file("src/simple_script.js").each_source_line { |l| @concatenation.record(l) }
+      assert_equal content_of_fixture("src/simple_script_compressed.js"), @concatenation.to_s
+    end
   
-  def test_to_s_with_yui_compressor_shortening_variable_names
-    return unless yui_compressor_available?
-    @concatenation = Sprockets::Concatenation.new(:yui_compressor => { :munge => true })
-    source_file("src/simple_script.js").each_source_line { |l| @concatenation.record(l) }
-    assert_equal content_of_fixture("src/simple_script_compressed_shortened.js"), @concatenation.to_s
+    def test_to_s_with_compress_options
+      @concatenation = Sprockets::Concatenation.new(:compress => { :munge => true })
+      source_file("src/simple_script.js").each_source_line { |l| @concatenation.record(l) }
+      assert_equal content_of_fixture("src/simple_script_compressed_shortened.js"), @concatenation.to_s
+    end
   end
   
   def test_save_to
