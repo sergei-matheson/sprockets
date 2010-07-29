@@ -1,6 +1,7 @@
 module Sprockets
   class SourceLine
-    attr_reader :source_file, :line, :number
+    attr_reader :source_file, :number
+    attr_accessor :line
 
     def initialize(source_file, line, number)
       @source_file = source_file
@@ -50,6 +51,14 @@ module Sprockets
     
     def provide?
       !!provide
+    end
+
+    def import_haml
+      @import_haml ||= (comment || "")[/^=\s+import_haml\s+(\"(.*?)\"|<(.*?)>)\s*$/, 1]
+    end
+    
+    def import_haml?
+      !!import_haml
     end
     
     def inspect

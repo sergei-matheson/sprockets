@@ -8,6 +8,9 @@ module Sprockets
       @source_files = []
       @asset_paths = []
       @options = options
+			@options[:escape_sequence] ||= "\a"
+			@options[:quote_char] ||= "'"
+			@haml_helper = HamlHelper.new @options[:escape_sequence], @options[:quote_char]
     end
     
     def require(source_file)
@@ -19,6 +22,8 @@ module Sprockets
           require_from_source_line(source_line)
         elsif source_line.provide?
           provide_from_source_line(source_line)
+        elsif source_line.import_haml?
+          import_haml_from_source_line(source_line)
         else
           record_source_line(source_line)
         end
@@ -28,6 +33,13 @@ module Sprockets
     def provide(asset_path)
       return if !asset_path || asset_paths.include?(asset_path)
       asset_paths << asset_path
+    end
+
+    def import_haml(haml_path)
+      return if !haml_path 
+			haml_template = File.read haml_path
+			engine = ::Haml::Engine.new(haml_template)
+			"#{@options[:escape_sequence]}#{engine.render @haml_helper}#{@options[:escape_sequence]}".gsub(@options[:quote_char], "\\\\#{@options[:quote_char]}").gsub("#{@options[:escape_sequence]}", @options[:quote_char])
     end
     
     protected
@@ -39,6 +51,19 @@ module Sprockets
       
       def provide_from_source_line(source_line)
         provide asset_path_from(source_line)
+      end
+
+      def import_haml_from_source_line(source_line)
+				begin
+					html_string  = import_haml source_line.import_haml[/^.(.*).$/, 1]
+				rescue
+					message = "Error at #{source_line.inspect}: Could not import haml from '#{source_line.import_haml}': #{$!.inspect}"
+					raise message
+				end
+				if html_string 
+					source_line.line= html_string
+          concatenation.record(source_line)
+				end
       end
       
       def record_source_line(source_line)
