@@ -60,6 +60,14 @@ module Sprockets
     def import_haml?
       !!import_haml
     end
+
+    def package
+      @package ||= (comment || "")[/^=\s+package\s+(\"(.*?)\"|<(.*?)>)\s*$/, 1]
+    end
+    
+    def package?
+      !!package
+    end
     
     def inspect
       "line #@number of #{@source_file.pathname}"
