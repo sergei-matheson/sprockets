@@ -40,23 +40,31 @@ module Sprockets
     def require
       @require ||= (comment || "")[/^=\s+require\s+(\"(.*?)\"|<(.*?)>)\s*$/, 1]
     end
-    
+
     def require?
       !!require
     end
-    
+
     def provide
       @provide ||= (comment || "")[/^=\s+provide\s+\"(.*?)\"\s*$/, 1]
     end
-    
+
     def provide?
       !!provide
     end
 
     def import_haml
-      @import_haml ||= (comment || "")[/^=\s+import_haml\s+(\"(.*?)\"|<(.*?)>)\s*$/, 1]
+      @import_haml ||= line[/(^.*)\/\/=\s+import_haml\s+(\"(.*?)\"|<(.*?)>|'(.*?)')\s*$/]
     end
-    
+
+    def directive_prefix
+      line[/^(.*)\/\/= .*/,1]
+    end
+
+    def directive_arg
+      line[/^.*\/\/= \S+\s*.(.*).$/,1]
+    end
+
     def import_haml?
       !!import_haml
     end
@@ -64,36 +72,36 @@ module Sprockets
     def package
       @package ||= (comment || "")[/^=\s+package\s+(\"(.*?)\"|<(.*?)>)\s*$/, 1]
     end
-    
+
     def package?
       !!package
     end
-    
+
     def inspect
       "line #@number of #{@source_file.pathname}"
     end
-    
+
     def to_s(constants = source_file.environment.constants)
       result = line.chomp
       interpolate_constants!(result, constants)
       strip_trailing_whitespace!(result)
       result + $/
     end
-    
+
     protected
-      def interpolate_constants!(result, constants)
-        result.gsub!(/<%=(.*?)%>/) do
-          constant = $1.strip
-          if value = constants[constant]
-            value
-          else
-            raise UndefinedConstantError, "couldn't find constant `#{constant}' in #{inspect}"
-          end
+    def interpolate_constants!(result, constants)
+      result.gsub!(/<%=(.*?)%>/) do
+        constant = $1.strip
+        if value = constants[constant]
+          value
+        else
+          raise UndefinedConstantError, "couldn't find constant `#{constant}' in #{inspect}"
         end
       end
-      
-      def strip_trailing_whitespace!(result)
-        result.gsub!(/\s+$/, "")
-      end
+    end
+
+    def strip_trailing_whitespace!(result)
+      result.gsub!(/\s+$/, "")
+    end
   end
 end
