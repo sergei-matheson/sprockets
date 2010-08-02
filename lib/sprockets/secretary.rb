@@ -62,7 +62,8 @@ module Sprockets
     end
     
     def source_last_modified
-      preprocessor.source_files.map { |s| s.mtime }.max
+      [preprocessor.source_files.map { |s| s.mtime }.max,
+        expand_paths(@options[:views_path]+'/**/**/*.haml').map { |s| File.new(s).mtime }.max].max
     end
     
     protected
