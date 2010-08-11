@@ -5,7 +5,7 @@ module Sprockets
 			@quote_char = quote_char
 		end
 
-		def client_js js_string
+		def js js_string
 			"#{@escape_sequence}+#{js_string.gsub(@quote_char, @escape_sequence)}+#{@escape_sequence}"
 		end
 	end
