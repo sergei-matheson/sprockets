@@ -53,7 +53,7 @@ module Sprockets
 
     def import_haml(haml_path)
       return if !haml_path 
-      haml_template = File.read(File.join(@options[:views_path], haml_path))
+      haml_template = File.read(environment.pathname_from(File.join(@options[:views_path], haml_path)).to_s)
       engine = ::Haml::Engine.new(haml_template, @haml_options)
       engine.options.update @haml_options
       ("#{@options[:escape_sequence]}#{engine.render @haml_helper}#{@options[:escape_sequence]}".gsub(@options[:quote_char], "\\\\#{@options[:quote_char]}").gsub("#{@options[:escape_sequence]}", @options[:quote_char])).gsub(/\n/, '')
