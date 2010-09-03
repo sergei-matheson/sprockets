@@ -61,8 +61,16 @@ module Sprockets
       line[/^(.*)\/\/= .*/,1]
     end
 
-    def directive_arg
-      line[/^.*\/\/= \S+\s*.(.*).$/,1]
+    def directive_name
+      line[/^.*\/\/= (\S+)\s*.*$/,1]
+    end
+
+    def directive_arg remove_quotes = false
+      if remove_quotes
+        line[/^.*\/\/= \S+\s*.(.*).$/,1]
+      else
+        line[/^.*\/\/= \S+\s*(.*)$/,1]
+      end
     end
 
     def import_haml?
@@ -79,6 +87,14 @@ module Sprockets
 
     def inspect
       "line #@number of #{@source_file.pathname}"
+    end
+
+    def if?
+      'if' == directive_name
+    end
+
+    def endif?
+      'endif' == directive_name
     end
 
     def to_s(constants = source_file.environment.constants)

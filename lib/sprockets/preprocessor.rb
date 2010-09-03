@@ -13,6 +13,10 @@ module Sprockets
       @options[:quote_char] ||= "'"
       @options[:include_file_markers] ||= false
       @haml_helper = HamlHelper.new @options[:escape_sequence], @options[:quote_char]
+      @winnowers = []
+      if strip_comments?
+        @winnowers.push Sprockets::Winnowers::IsComment.new
+      end
 
       @haml_options = {
         :ugly => true
@@ -35,6 +39,10 @@ module Sprockets
           import_haml_from_source_line(source_line)
         elsif source_line.package?
           package_from_source_line(source_line)
+        elsif source_line.if?
+          add_winnower source_line
+        elsif source_line.endif?
+          @winnowers.pop
         else
           record_source_line(source_line)
         end
@@ -110,7 +118,7 @@ module Sprockets
 
     def import_haml_from_source_line(source_line)
       begin
-        html_string  = import_haml source_line.directive_arg
+        html_string  = import_haml source_line.directive_arg true
         prefix = source_line.directive_prefix
       rescue
         message = "Error at #{source_line.inspect}: Could not import haml from '#{source_line.import_haml}': #{$!.inspect}"
@@ -131,8 +139,14 @@ module Sprockets
     end
 
     def record_source_line(source_line)
-      unless source_line.comment? && strip_comments?
+      if should_record source_line
         concatenation.record(source_line)
+      end
+    end
+
+    def should_record(source_line)
+      @winnowers.all? do |winnower|
+        winnower.should_record source_line
       end
     end
 
@@ -175,6 +189,12 @@ module Sprockets
       kind = kind_of_require_from(source_line).to_s.tr("_", " ")
       file = File.split(location_from(source_line)).last
       raise LoadError, "can't find file for #{kind} `#{file}' (#{source_line.inspect})"
+    end
+
+    def add_winnower(source_line)
+      args = source_line.directive_arg.split('=').map {|value| value.strip()}
+      raise "Invalid directive #{source_line.to_s} (#{source_line.inspect})" unless args.length == 2
+      @winnowers.push((self.options[args[0].to_sym] == args[1]) ? Sprockets::Winnowers::Boolean.true : Sprockets::Winnowers::Boolean.false)
     end
   end
 end
